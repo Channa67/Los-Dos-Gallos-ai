@@ -93,7 +93,7 @@ class LosDosGallosVoiceAgent {
         console.error('❌ Error processing order:', error);
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
-          voice: 'Polly.Lupe',
+          voice: 'Polly.Joanna',
           language: 'en-US'
         }, 'Sorry, there was an error processing your order. Let me get someone to help you.');
         res.type('text/xml');
@@ -171,15 +171,16 @@ class LosDosGallosVoiceAgent {
             ${JSON.stringify(this.menu, null, 2)}
             
             INSTRUCTIONS:
-            1. Take the customer's order without recommendations or suggestions
-            2. If they order something not on the menu, simply say "We don't have that item"
-            3. When they say "that's all", "that's it", or similar - calculate the total with 7% Georgia tax and read back their complete order
-            4. Keep responses brief and professional
+            1. Take the customer's order without asking "is that correct" after each item
+            2. When they say "that's all", "that's it", or similar - calculate the total with 7% Georgia tax and read back their COMPLETE order with quantities
+            3. If they order something not on the menu, simply say "We don't have that item"
+            4. Keep responses brief - just acknowledge each item they order
+            5. Only ask for confirmation at the very end when giving the total
             
             RESPONSE FORMAT when order is complete:
-            "I have [list items]. Your total is $[amount] with tax. Is that correct?"
+            "I have [quantity and items]. Your total is $[amount] with tax. Is that correct?"
             
-            Do NOT suggest items. Do NOT ask what else they want. Just take what they order.`
+            DURING ordering, just say things like "Got it" or "Okay" after each item. Do NOT ask for confirmation until the end.`
           },
           {
             role: "user",
@@ -211,9 +212,9 @@ class LosDosGallosVoiceAgent {
       });
 
       gather.say({
-        voice: 'Polly.Lupe',
+        voice: 'Polly.Joanna',
         language: 'en-US'
-      }, 'Please say yes if that\'s correct, or tell me what to change.');
+      }, 'Is that correct?');
 
     } catch (error) {
       console.error('❌ OpenAI Error:', error);
