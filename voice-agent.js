@@ -77,7 +77,7 @@ class LosDosGallosVoiceAgent {
         console.error('❌ Error handling voice call:', error);
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
-          voice: 'Polly.Lupe',
+          voice: 'Polly.Joanna',
           language: 'es-US'
         }, 'Lo siento, tengo problemas técnicos. Por favor llame más tarde.');
         res.type('text/xml');
