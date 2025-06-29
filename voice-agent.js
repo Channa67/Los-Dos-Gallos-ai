@@ -140,7 +140,7 @@ class LosDosGallosVoiceAgent {
     gather.say({
       voice: 'Polly.Lupe',
       language: 'en-US'
-    }, 'You can order tacos, burritos, sides, and drinks. Just tell me what you\'d like!');
+    }, 'What would you like to order?');
 
     // Fallback if no input
     twiml.say({
@@ -165,22 +165,21 @@ class LosDosGallosVoiceAgent {
         messages: [
           {
             role: "system",
-            content: `You are Maria, a warm and friendly AI assistant for Los Dos Gallos Mexican restaurant. You speak with a light Hispanic accent and are bilingual, but respond primarily in English unless the customer speaks Spanish. You're professional but warm and welcoming.
+            content: `            You are Maria, an AI order-taker for Los Dos Gallos Mexican restaurant. Your job is to take orders efficiently and accurately.
             
             MENU:
             ${JSON.stringify(this.menu, null, 2)}
             
-            Process customer orders and respond naturally like a restaurant host would. Include:
-            1. Acknowledge what they ordered with warmth
-            2. Mention any modifications they requested
-            3. Calculate total with 7% Georgia tax
-            4. Ask for confirmation
+            INSTRUCTIONS:
+            1. Take the customer's order without recommendations or suggestions
+            2. If they order something not on the menu, simply say "We don't have that item"
+            3. When they say "that's all", "that's it", or similar - calculate the total with 7% Georgia tax and read back their complete order
+            4. Keep responses brief and professional
             
-            Keep responses conversational and under 150 words. If they order something not on the menu, suggest similar items warmly. You can use occasional Spanish words naturally (like "perfecto" or "¡excelente!") but keep it mostly English.
+            RESPONSE FORMAT when order is complete:
+            "I have [list items]. Your total is $[amount] with tax. Is that correct?"
             
-            Always end by asking "Does this sound correct to you?" or "¿Todo bien?"
-            
-            Example response style: "¡Perfecto! So I have two street tacos with extra cheese, no onions, and one horchata. That comes to $8.56 with tax. Does this sound correct to you?"`
+            Do NOT suggest items. Do NOT ask what else they want. Just take what they order.`
           },
           {
             role: "user",
@@ -200,20 +199,21 @@ class LosDosGallosVoiceAgent {
         language: 'en-US'
       }, aiResponse);
 
-      // Ask for confirmation
+      // Ask for confirmation with better speech settings
       const gather = twiml.gather({
         input: 'speech',
-        timeout: 10,
-        speechTimeout: 'auto',
+        timeout: 8,
+        speechTimeout: 2,
         action: '/confirm-order',
         method: 'POST',
-        language: 'en-US'
+        language: 'en-US',
+        speechModel: 'phone_call'
       });
 
       gather.say({
         voice: 'Polly.Lupe',
         language: 'en-US'
-      }, 'Please say yes to confirm, or tell me what you\'d like to change.');
+      }, 'Please say yes if that\'s correct, or tell me what to change.');
 
     } catch (error) {
       console.error('❌ OpenAI Error:', error);
@@ -233,18 +233,19 @@ class LosDosGallosVoiceAgent {
     
     console.log('🎤 Customer confirmation:', userResponse);
 
-    // Simple confirmation logic
+    // Simple confirmation logic - recognize multiple ways to confirm
     if (userResponse.toLowerCase().includes('yes') || 
-        userResponse.toLowerCase().includes('sí') ||
         userResponse.toLowerCase().includes('correct') ||
-        userResponse.toLowerCase().includes('confirm') ||
         userResponse.toLowerCase().includes('right') ||
-        userResponse.toLowerCase().includes('perfecto')) {
+        userResponse.toLowerCase().includes('ok') ||
+        userResponse.toLowerCase().includes('good') ||
+        userResponse.toLowerCase().includes('that\'s right') ||
+        userResponse.toLowerCase().includes('confirm')) {
       
       twiml.say({
         voice: 'Polly.Lupe',
         language: 'en-US'
-      }, '¡Perfecto! Your order has been confirmed and sent to our kitchen. It will be ready for pickup in 20 to 25 minutes at Los Dos Gallos. Thank you so much for choosing us, and have a wonderful day! ¡Que tenga buen día!');
+      }, 'Perfect! Your order has been confirmed and sent to our kitchen. It will be ready for pickup in 20 to 25 minutes at Los Dos Gallos. Thank you so much for choosing us, and have a wonderful day!');
       
       console.log('✅ Order confirmed and sent to kitchen');
       
@@ -252,11 +253,12 @@ class LosDosGallosVoiceAgent {
       // Customer wants to make changes
       const gather = twiml.gather({
         input: 'speech',
-        timeout: 10,
-        speechTimeout: 'auto',
+        timeout: 8,
+        speechTimeout: 2,
         action: '/process-order',
         method: 'POST',
-        language: 'en-US'
+        language: 'en-US',
+        speechModel: 'phone_call'
       });
 
       gather.say({
