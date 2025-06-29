@@ -1,4 +1,4 @@
-// Los Dos Gallos AI Voice Agent with Lupe (Amazon Polly)
+// Los Dos Gallos AI Voice Agent with Joanna (Amazon Polly)
 const express = require('express');
 const twilio = require('twilio');
 const OpenAI = require('openai');
@@ -64,7 +64,7 @@ class LosDosGallosVoiceAgent {
       res.json({ 
         status: 'healthy', 
         restaurant: 'Los Dos Gallos',
-        voice: 'Amazon Polly - Lupe',
+        voice: 'Amazon Polly - Joanna',
         timestamp: new Date().toISOString()
       });
     });
@@ -78,8 +78,8 @@ class LosDosGallosVoiceAgent {
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
           voice: 'Polly.Joanna',
-          language: 'es-US'
-        }, 'Lo siento, tengo problemas técnicos. Por favor llame más tarde.');
+          language: 'en-US'
+        }, 'Sorry, I\'m having technical problems right now. Please call back later.');
         res.type('text/xml');
         res.send(twiml.toString());
       }
@@ -109,7 +109,7 @@ class LosDosGallosVoiceAgent {
         console.error('❌ Error confirming order:', error);
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
-          voice: 'Polly.Lupe',
+          voice: 'Polly.Joanna',
           language: 'en-US'
         }, 'Sorry, there was an error with your order confirmation.');
         res.type('text/xml');
@@ -121,32 +121,33 @@ class LosDosGallosVoiceAgent {
   async handleVoiceCall(req, res) {
     const twiml = new twilio.twiml.VoiceResponse();
     
-    // Welcome message with Lupe's voice
+    // Welcome message with Joanna's voice
     twiml.say({
-      voice: 'Polly.Lupe',
+      voice: 'Polly.Joanna',
       language: 'en-US'
     }, 'Hello! Thank you for calling Los Dos Gallos! I\'m Maria, and I\'m here to help you place your order. What can I get started for you today?');
 
-    // Gather speech input
+    // Gather speech input with better settings
     const gather = twiml.gather({
       input: 'speech',
-      timeout: 10,
-      speechTimeout: 'auto',
+      timeout: 8,
+      speechTimeout: 2,
       action: '/process-order',
       method: 'POST',
-      language: 'en-US'
+      language: 'en-US',
+      speechModel: 'phone_call'
     });
 
     gather.say({
-      voice: 'Polly.Lupe',
+      voice: 'Polly.Joanna',
       language: 'en-US'
     }, 'What would you like to order?');
 
     // Fallback if no input
     twiml.say({
-      voice: 'Polly.Lupe',
+      voice: 'Polly.Joanna',
       language: 'en-US'
-    }, 'I didn\'t hear anything. Please call back when you\'re ready to order. ¡Hasta luego!');
+    }, 'I didn\'t hear anything. Please call back when you\'re ready to order. Goodbye!');
 
     res.type('text/xml');
     res.send(twiml.toString());
@@ -165,7 +166,7 @@ class LosDosGallosVoiceAgent {
         messages: [
           {
             role: "system",
-            content: `            You are Maria, an AI order-taker for Los Dos Gallos Mexican restaurant. Your job is to take orders efficiently and accurately.
+            content: `You are Maria, an AI order-taker for Los Dos Gallos Mexican restaurant. Your job is to take orders efficiently and accurately.
             
             MENU:
             ${JSON.stringify(this.menu, null, 2)}
@@ -180,7 +181,9 @@ class LosDosGallosVoiceAgent {
             RESPONSE FORMAT when order is complete:
             "I have [quantity and items]. Your total is $[amount] with tax. Is that correct?"
             
-            DURING ordering, just say things like "Got it" or "Okay" after each item. Do NOT ask for confirmation until the end.`
+            DURING ordering, just say things like "Got it" or "Okay" after each item. Do NOT ask for confirmation until the end.
+            
+            Do NOT suggest items. Do NOT ask what else they want. Just take what they order.`
           },
           {
             role: "user",
@@ -194,9 +197,9 @@ class LosDosGallosVoiceAgent {
       const aiResponse = completion.choices[0].message.content;
       console.log('🤖 AI Response:', aiResponse);
 
-      // Use Lupe's voice for the response
+      // Use Joanna's voice for the response
       twiml.say({
-        voice: 'Polly.Lupe',
+        voice: 'Polly.Joanna',
         language: 'en-US'
       }, aiResponse);
 
@@ -219,7 +222,7 @@ class LosDosGallosVoiceAgent {
     } catch (error) {
       console.error('❌ OpenAI Error:', error);
       twiml.say({
-        voice: 'Polly.Lupe',
+        voice: 'Polly.Joanna',
         language: 'en-US'
       }, 'I\'m sorry, I\'m having trouble processing your order right now. Let me get one of our staff members to help you.');
     }
@@ -244,7 +247,7 @@ class LosDosGallosVoiceAgent {
         userResponse.toLowerCase().includes('confirm')) {
       
       twiml.say({
-        voice: 'Polly.Lupe',
+        voice: 'Polly.Joanna',
         language: 'en-US'
       }, 'Perfect! Your order has been confirmed and sent to our kitchen. It will be ready for pickup in 20 to 25 minutes at Los Dos Gallos. Thank you so much for choosing us, and have a wonderful day!');
       
@@ -263,7 +266,7 @@ class LosDosGallosVoiceAgent {
       });
 
       gather.say({
-        voice: 'Polly.Lupe',
+        voice: 'Polly.Joanna',
         language: 'en-US'
       }, 'No problem at all! What would you like to change or add to your order?');
     }
@@ -276,17 +279,17 @@ class LosDosGallosVoiceAgent {
     this.app.listen(this.port, () => {
       console.log('🐓 Los Dos Gallos Voice Agent running on port', this.port);
       console.log('📞 Phone webhook URL: https://los-dos-gallos-ai-production.up.railway.app/voice');
-      console.log('🎤 Voice: Amazon Polly - Lupe (Hispanic accent)');
-      console.log('🎯 Ready to take orders with natural voice!');
+      console.log('🎤 Voice: Amazon Polly - Joanna (Clear pronunciation)');
+      console.log('🎯 Ready to take orders with professional voice!');
       console.log('');
       console.log('🎯 Features:');
-      console.log('  ✅ Natural Hispanic accent with Lupe voice');
-      console.log('  ✅ Bilingual capabilities (English primary)'); 
+      console.log('  ✅ Crystal clear Joanna voice');
+      console.log('  ✅ Efficient order taking (no confirmation after each item)'); 
       console.log('  ✅ Professional restaurant conversations');
       console.log('  ✅ Order processing with AI');
       console.log('  ✅ Tax calculations');
-      console.log('  ✅ Order confirmation');
-      console.log('  ✅ Warm, welcoming personality');
+      console.log('  ✅ Final order confirmation only');
+      console.log('  ✅ Better speech recognition');
       console.log('');
     });
   }
