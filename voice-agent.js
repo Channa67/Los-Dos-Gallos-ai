@@ -1,8 +1,7 @@
-// Los Dos Gallos AI Voice Agent with ElevenLabs Integration
+// Los Dos Gallos AI Voice Agent with Lupe (Amazon Polly)
 const express = require('express');
 const twilio = require('twilio');
 const OpenAI = require('openai');
-const axios = require('axios');
 
 class LosDosGallosVoiceAgent {
   constructor() {
@@ -26,15 +25,6 @@ class LosDosGallosVoiceAgent {
     }
     
     this.twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    
-    // Initialize ElevenLabs
-    if (!process.env.ELEVENLABS_API_KEY || !process.env.ELEVENLABS_VOICE_ID) {
-      console.error('❌ ELEVENLABS_API_KEY or ELEVENLABS_VOICE_ID environment variables are missing');
-      process.exit(1);
-    }
-    
-    this.elevenLabsApiKey = process.env.ELEVENLABS_API_KEY;
-    this.elevenLabsVoiceId = process.env.ELEVENLABS_VOICE_ID;
     
     // Menu data for Los Dos Gallos
     this.menu = {
@@ -64,37 +54,6 @@ class LosDosGallosVoiceAgent {
     this.initializeRoutes();
   }
 
-  async generateElevenLabsSpeech(text) {
-    try {
-      const response = await axios.post(
-        `https://api.elevenlabs.io/v1/text-to-speech/${this.elevenLabsVoiceId}`,
-        {
-          text: text,
-          model_id: "eleven_monolingual_v1",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.8,
-            style: 0.2,
-            use_speaker_boost: true
-          }
-        },
-        {
-          headers: {
-            'Accept': 'audio/mpeg',
-            'xi-api-key': this.elevenLabsApiKey,
-            'Content-Type': 'application/json'
-          },
-          responseType: 'arraybuffer'
-        }
-      );
-      
-      return Buffer.from(response.data);
-    } catch (error) {
-      console.error('❌ ElevenLabs API Error:', error.response?.data || error.message);
-      throw error;
-    }
-  }
-
   initializeRoutes() {
     // Enable body parsing
     this.app.use(express.urlencoded({ extended: true }));
@@ -105,7 +64,7 @@ class LosDosGallosVoiceAgent {
       res.json({ 
         status: 'healthy', 
         restaurant: 'Los Dos Gallos',
-        voice: 'ElevenLabs Maria',
+        voice: 'Amazon Polly - Lupe',
         timestamp: new Date().toISOString()
       });
     });
@@ -118,9 +77,9 @@ class LosDosGallosVoiceAgent {
         console.error('❌ Error handling voice call:', error);
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
-          voice: 'woman',
-          language: 'en-US'
-        }, 'Sorry, I\'m having trouble right now. Please call back later.');
+          voice: 'Polly.Lupe',
+          language: 'es-US'
+        }, 'Lo siento, tengo problemas técnicos. Por favor llame más tarde.');
         res.type('text/xml');
         res.send(twiml.toString());
       }
@@ -134,9 +93,9 @@ class LosDosGallosVoiceAgent {
         console.error('❌ Error processing order:', error);
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
-          voice: 'woman',
+          voice: 'Polly.Lupe',
           language: 'en-US'
-        }, 'Sorry, there was an error processing your order.');
+        }, 'Sorry, there was an error processing your order. Let me get someone to help you.');
         res.type('text/xml');
         res.send(twiml.toString());
       }
@@ -150,62 +109,44 @@ class LosDosGallosVoiceAgent {
         console.error('❌ Error confirming order:', error);
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
-          voice: 'woman',
+          voice: 'Polly.Lupe',
           language: 'en-US'
-        }, 'Sorry, there was an error processing your order.');
+        }, 'Sorry, there was an error with your order confirmation.');
         res.type('text/xml');
         res.send(twiml.toString());
       }
-    });
-
-    // Audio endpoint for ElevenLabs
-    this.app.get('/audio/:filename', (req, res) => {
-      // This would serve audio files if we were saving them locally
-      // For now, we'll use direct streaming
-      res.status(404).send('Audio file not found');
     });
   }
 
   async handleVoiceCall(req, res) {
     const twiml = new twilio.twiml.VoiceResponse();
     
-    // Welcome message with ElevenLabs voice
-    const welcomeText = "Hello! Thank you for calling Los Dos Gallos! I'm Maria, and I'm here to help you place your order. What would you like today?";
-    
-    try {
-      // For now, use Twilio's voice but with better text
-      twiml.say({
-        voice: 'woman',
-        language: 'en-US'
-      }, welcomeText);
+    // Welcome message with Lupe's voice
+    twiml.say({
+      voice: 'Polly.Lupe',
+      language: 'en-US'
+    }, 'Hello! Thank you for calling Los Dos Gallos! I\'m Maria, and I\'m here to help you place your order. What can I get started for you today?');
 
-      // Gather speech input
-      const gather = twiml.gather({
-        input: 'speech',
-        timeout: 10,
-        speechTimeout: 'auto',
-        action: '/process-order',
-        method: 'POST'
-      });
+    // Gather speech input
+    const gather = twiml.gather({
+      input: 'speech',
+      timeout: 10,
+      speechTimeout: 'auto',
+      action: '/process-order',
+      method: 'POST',
+      language: 'en-US'
+    });
 
-      gather.say({
-        voice: 'woman',
-        language: 'en-US'
-      }, 'You can order tacos, burritos, sides, and drinks. Just tell me what you\'d like!');
+    gather.say({
+      voice: 'Polly.Lupe',
+      language: 'en-US'
+    }, 'You can order tacos, burritos, sides, and drinks. Just tell me what you\'d like!');
 
-      // Fallback if no input
-      twiml.say({
-        voice: 'woman',
-        language: 'en-US'
-      }, 'I didn\'t hear anything. Please call back when you\'re ready to order. Goodbye!');
-
-    } catch (error) {
-      console.error('❌ Error in voice handling:', error);
-      twiml.say({
-        voice: 'woman',
-        language: 'en-US'
-      }, 'Sorry, I\'m having trouble right now.');
-    }
+    // Fallback if no input
+    twiml.say({
+      voice: 'Polly.Lupe',
+      language: 'en-US'
+    }, 'I didn\'t hear anything. Please call back when you\'re ready to order. ¡Hasta luego!');
 
     res.type('text/xml');
     res.send(twiml.toString());
@@ -224,36 +165,38 @@ class LosDosGallosVoiceAgent {
         messages: [
           {
             role: "system",
-            content: `You are Maria, a warm and friendly AI assistant for Los Dos Gallos Mexican restaurant. You have a light Hispanic accent and speak professionally but warmly.
+            content: `You are Maria, a warm and friendly AI assistant for Los Dos Gallos Mexican restaurant. You speak with a light Hispanic accent and are bilingual, but respond primarily in English unless the customer speaks Spanish. You're professional but warm and welcoming.
             
             MENU:
             ${JSON.stringify(this.menu, null, 2)}
             
             Process customer orders and respond naturally like a restaurant host would. Include:
-            1. Acknowledge what they ordered
-            2. Mention any modifications
+            1. Acknowledge what they ordered with warmth
+            2. Mention any modifications they requested
             3. Calculate total with 7% Georgia tax
             4. Ask for confirmation
             
-            Keep responses conversational and under 200 words. If they order something not on the menu, suggest similar items warmly.
+            Keep responses conversational and under 150 words. If they order something not on the menu, suggest similar items warmly. You can use occasional Spanish words naturally (like "perfecto" or "¡excelente!") but keep it mostly English.
             
-            Always end by asking "Does this sound correct to you?"`
+            Always end by asking "Does this sound correct to you?" or "¿Todo bien?"
+            
+            Example response style: "¡Perfecto! So I have two street tacos with extra cheese, no onions, and one horchata. That comes to $8.56 with tax. Does this sound correct to you?"`
           },
           {
             role: "user",
             content: userSpeech
           }
         ],
-        max_tokens: 300,
+        max_tokens: 250,
         temperature: 0.7
       });
 
       const aiResponse = completion.choices[0].message.content;
       console.log('🤖 AI Response:', aiResponse);
 
-      // Use Twilio voice for now (we'll enhance with ElevenLabs in future updates)
+      // Use Lupe's voice for the response
       twiml.say({
-        voice: 'woman',
+        voice: 'Polly.Lupe',
         language: 'en-US'
       }, aiResponse);
 
@@ -263,20 +206,21 @@ class LosDosGallosVoiceAgent {
         timeout: 10,
         speechTimeout: 'auto',
         action: '/confirm-order',
-        method: 'POST'
+        method: 'POST',
+        language: 'en-US'
       });
 
       gather.say({
-        voice: 'woman',
+        voice: 'Polly.Lupe',
         language: 'en-US'
       }, 'Please say yes to confirm, or tell me what you\'d like to change.');
 
     } catch (error) {
       console.error('❌ OpenAI Error:', error);
       twiml.say({
-        voice: 'woman',
+        voice: 'Polly.Lupe',
         language: 'en-US'
-      }, 'I\'m sorry, I\'m having trouble processing your order right now. Let me transfer you to one of our staff members.');
+      }, 'I\'m sorry, I\'m having trouble processing your order right now. Let me get one of our staff members to help you.');
     }
 
     res.type('text/xml');
@@ -291,16 +235,16 @@ class LosDosGallosVoiceAgent {
 
     // Simple confirmation logic
     if (userResponse.toLowerCase().includes('yes') || 
+        userResponse.toLowerCase().includes('sí') ||
         userResponse.toLowerCase().includes('correct') ||
         userResponse.toLowerCase().includes('confirm') ||
-        userResponse.toLowerCase().includes('right')) {
-      
-      const confirmationText = "Perfect! Your order has been confirmed and sent to our kitchen. It will be ready for pickup in 20 to 25 minutes at Los Dos Gallos. Thank you so much for choosing us, and have a wonderful day!";
+        userResponse.toLowerCase().includes('right') ||
+        userResponse.toLowerCase().includes('perfecto')) {
       
       twiml.say({
-        voice: 'woman',
+        voice: 'Polly.Lupe',
         language: 'en-US'
-      }, confirmationText);
+      }, '¡Perfecto! Your order has been confirmed and sent to our kitchen. It will be ready for pickup in 20 to 25 minutes at Los Dos Gallos. Thank you so much for choosing us, and have a wonderful day! ¡Que tenga buen día!');
       
       console.log('✅ Order confirmed and sent to kitchen');
       
@@ -311,11 +255,12 @@ class LosDosGallosVoiceAgent {
         timeout: 10,
         speechTimeout: 'auto',
         action: '/process-order',
-        method: 'POST'
+        method: 'POST',
+        language: 'en-US'
       });
 
       gather.say({
-        voice: 'woman',
+        voice: 'Polly.Lupe',
         language: 'en-US'
       }, 'No problem at all! What would you like to change or add to your order?');
     }
@@ -326,18 +271,19 @@ class LosDosGallosVoiceAgent {
 
   start() {
     this.app.listen(this.port, () => {
-      console.log('🐓 Los Dos Gallos Voice Agent with ElevenLabs running on port', this.port);
+      console.log('🐓 Los Dos Gallos Voice Agent running on port', this.port);
       console.log('📞 Phone webhook URL: https://los-dos-gallos-ai-production.up.railway.app/voice');
-      console.log('🎤 Voice: ElevenLabs Maria (ID: 73QyABn64CLAQjX0IiVp)');
-      console.log('🎯 Ready to take orders for Los Dos Gallos!');
+      console.log('🎤 Voice: Amazon Polly - Lupe (Hispanic accent)');
+      console.log('🎯 Ready to take orders with natural voice!');
       console.log('');
-      console.log('🎯 Enhanced Features:');
-      console.log('  ✅ Natural voice with ElevenLabs');
-      console.log('  ✅ Professional restaurant conversations'); 
-      console.log('  ✅ Maria\'s warm personality');
+      console.log('🎯 Features:');
+      console.log('  ✅ Natural Hispanic accent with Lupe voice');
+      console.log('  ✅ Bilingual capabilities (English primary)'); 
+      console.log('  ✅ Professional restaurant conversations');
       console.log('  ✅ Order processing with AI');
       console.log('  ✅ Tax calculations');
       console.log('  ✅ Order confirmation');
+      console.log('  ✅ Warm, welcoming personality');
       console.log('');
     });
   }
