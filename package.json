@@ -1,5 +1,5 @@
 {
-  "name": "los-dos-gallos-voice-agent",
+  "name": "voice-agent.js",
   "version": "1.0.0",
   "description": "AI Voice Agent for Los Dos Gallos Mexican Restaurant",
   "main": "voice-agent.js",
