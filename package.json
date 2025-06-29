@@ -1,7 +1,7 @@
 {
-  "name": "voice-agent.js",
+  "name": "los-dos-gallos-voice-agent",
   "version": "1.0.0",
-  "description": "AI Voice Agent for Los Dos Gallos Mexican Restaurant",
+  "description": "AI Voice Agent for Los Dos Gallos Mexican Restaurant with ElevenLabs",
   "main": "voice-agent.js",
   "scripts": {
     "start": "node voice-agent.js"
@@ -10,6 +10,7 @@
     "express": "^4.18.2",
     "twilio": "^4.19.0",
     "openai": "^4.24.0",
+    "axios": "^1.6.0",
     "dotenv": "^16.3.1"
   },
   "engines": {
